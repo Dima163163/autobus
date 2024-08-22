@@ -59,11 +59,10 @@ const sendUpdatedData = async () => {
 
   const udatedBuses = buses.map(bus => {
     const nextDeparture = getNextDeparture(bus.firstDepartureTime, bus.frequencyMinutes);
-    console.log('nextDeparture: ', nextDeparture);
 
     return {...bus, nextDeparture: {
-      data: nextDeparture.toFormat('yyyy-mm-dd'),
-      time: nextDeparture.toFormat('hh:mm:ss')
+      data: nextDeparture.toFormat('yyyy-MM-dd'),
+      time: nextDeparture.toFormat('HH:mm:ss')
     }}
   });
 
@@ -74,7 +73,10 @@ const sendUpdatedData = async () => {
 app.get('/next-departure', async (req, res) => {
   try {
     const updatedBuses = await sendUpdatedData();
-    res.json(updatedBuses)
+
+    const sortUpdatedBuses = updatedBuses.sort((a, b) => Date.parse(a.nextDeparture.data + 'T' + a.nextDeparture.time) - Date.parse(b.nextDeparture.data + 'T' + b.nextDeparture.time))
+
+    res.json(sortUpdatedBuses)
   } catch (error) {
     res.send('Error!');
   }
