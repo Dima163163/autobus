@@ -12,6 +12,8 @@ const port = 3000;
 
 const app = express();
 
+app.use(express.static(path.join(__dirname, 'public')))
+
 const loadBuses = async () => {
   const data = await readFile(path.join(__dirname, 'buses.json'), 'utf-8');
   return JSON.parse(data);
@@ -54,6 +56,7 @@ const getNextDeparture = (firstDepartureTime, frequencyMinutes) => {
   return departure;
 }
 
+
 const sendUpdatedData = async () => {
   const buses = await loadBuses();
 
@@ -61,7 +64,7 @@ const sendUpdatedData = async () => {
     const nextDeparture = getNextDeparture(bus.firstDepartureTime, bus.frequencyMinutes);
 
     return {...bus, nextDeparture: {
-      data: nextDeparture.toFormat('yyyy-MM-dd'),
+      date: nextDeparture.toFormat('yyyy-MM-dd'),
       time: nextDeparture.toFormat('HH:mm:ss')
     }}
   });
@@ -69,14 +72,17 @@ const sendUpdatedData = async () => {
   return udatedBuses
 }
 
+const sortBuses = (buses) =>
+[...buses].sort((a, b) => new Date(`${a.nextDeparture.date}T${a.nextDeparture.time}`) - new  Date(`${b.nextDeparture.date}T${b.nextDeparture.time}`));
 
 app.get('/next-departure', async (req, res) => {
   try {
     const updatedBuses = await sendUpdatedData();
 
-    const sortUpdatedBuses = updatedBuses.sort((a, b) => Date.parse(a.nextDeparture.data + 'T' + a.nextDeparture.time) - Date.parse(b.nextDeparture.data + 'T' + b.nextDeparture.time))
+    const sortedBuses = sortBuses(updatedBuses);
 
-    res.json(sortUpdatedBuses)
+
+    res.json(sortedBuses)
   } catch (error) {
     res.send('Error!');
   }
